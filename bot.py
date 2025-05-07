@@ -1,5 +1,5 @@
-import logging
 import os
+import logging
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 from dotenv import load_dotenv
@@ -7,6 +7,9 @@ from playwright.async_api import async_playwright
 
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+
+if not TELEGRAM_TOKEN:
+    raise ValueError("TELEGRAM_TOKEN is not set in environment variables.")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -29,13 +32,12 @@ async def get_snap_media(url):
         return None
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("أرسل رابط قصة من Snapchat مثل: https://story.snapchat.com/s/...")
+    await update.message.reply_text("أرسل رابط قصة سناب شات مثل:\nhttps://story.snapchat.com/s/...")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     snap_url = text if text.startswith("http") else f"https://www.snapchat.com/add/{text}"
-
-    await update.message.reply_text("جارٍ تحميل المحتوى...")
+    await update.message.reply_text("جارٍ التحميل...")
 
     media_url = await get_snap_media(snap_url)
     if media_url:
@@ -45,10 +47,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 await update.message.reply_photo(media_url)
         except Exception as e:
-            logger.error(f"خطأ في إرسال الوسائط: {e}")
-            await update.message.reply_text("تم العثور على الوسائط ولكن حدث خطأ أثناء الإرسال.")
+            logger.error(f"فشل الإرسال: {e}")
+            await update.message.reply_text("تم العثور على المحتوى لكن حدث خطأ أثناء الإرسال.")
     else:
-        await update.message.reply_text("لم يتم العثور على محتوى عام أو رابط غير صالح.")
+        await update.message.reply_text("لم يتم العثور على وسائط أو الرابط غير صحيح.")
 
 def main():
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
